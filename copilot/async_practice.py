@@ -2,6 +2,12 @@ import asyncio
 import time
 
 import httpx
+import os
+
+API_BASE_URL = os.getenv(
+    "API_BASE_URL",
+    "http://127.0.0.1:8001",
+)
 
 def normalize_result(result):
     if isinstance(result, TimeoutError):
@@ -35,14 +41,14 @@ def normalize_result(result):
 async def fetch_inverters(client):
     return await get_json_with_retry(
         client,
-        "http://127.0.0.1:8001/inverters"
+        f"{API_BASE_URL}/inverters"
         
     )
     
 async def fetch_alarms(client):
     return await get_json_with_retry(
         client,
-        "http://127.0.0.1:8001/alarms"
+        f"{API_BASE_URL}/alarms"
     )
     
 
