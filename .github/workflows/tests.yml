@@ -25,3 +25,9 @@ jobs:
 
       - name: Run tests
         run: python -m pytest tests/test_async_http.py -q
+
+      - name: Build Docker image
+        run: docker build -t ai-engineering-practice .
+
+      - name: Run tests inside Docker
+        run: docker run --rm ai-engineering-practice python -m pytest tests/test_async_http.py -q
