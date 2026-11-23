@@ -2,6 +2,8 @@ import asyncio
 
 import httpx
 
+import pytest
+
 from copilot.async_practice import (
     fetch_inverters,
     investigate_alarms,
@@ -108,3 +110,24 @@ def test_inverter_request_recovers_after_two_failures():
     assert result == {"energy_kwh": 1500}
     assert len(attempts) == 3
     
+def test_inverter_request_after_three_failures():
+    attempts = []
+
+    def fake_api(request):
+        attempts.append(request.url.path)
+
+        return httpx.Response(
+            503,
+            json={"detail": "Alarm service unavailable"},
+        )
+
+    async def run_scenario():
+        transport = httpx.MockTransport(fake_api)
+
+        async with httpx.AsyncClient(transport=transport) as client:
+            with pytest.raises(httpx.HTTPStatusError):
+                await fetch_inverters(client)
+
+    asyncio.run(run_scenario())
+
+    assert len(attempts) == 3
