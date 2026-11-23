@@ -10,6 +10,8 @@ from copilot.async_practice import (
     normalize_result,
 )
 
+from unittest.mock import patch
+
 
 def test_alarm_failure_preserves_inverter_result():
     def fake_api(request):
@@ -131,3 +133,28 @@ def test_inverter_request_after_three_failures():
     asyncio.run(run_scenario())
 
     assert len(attempts) == 3
+    
+def test_inverter_request_uses_configured_base_url():
+    requested_urls = []
+
+    def fake_api(request):
+        requested_urls.append(str(request.url))
+        return httpx.Response(
+            200,
+            json={"energy_kwh": 1500},
+        )
+
+    async def run_scenario():
+        transport = httpx.MockTransport(fake_api)
+
+        async with httpx.AsyncClient(transport=transport) as client:
+            return await fetch_inverters(client)
+
+    with patch(
+        "copilot.async_practice.API_BASE_URL",
+        "https://example.test",
+    ):
+        result = asyncio.run(run_scenario())
+
+    assert requested_urls == ["https://example.test/inverters"]
+    assert result == {"energy_kwh": 1500}
